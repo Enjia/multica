@@ -636,6 +636,9 @@ func runIssueCommentAdd(cmd *cobra.Command, args []string) error {
 	if content == "" {
 		return fmt.Errorf("--content is required")
 	}
+	// Unescape literal \n and \t sequences that AI agents commonly produce
+	// when composing multi-line comments via shell commands.
+	content = unescapeContent(content)
 
 	client, err := newAPIClient(cmd)
 	if err != nil {
@@ -959,4 +962,14 @@ func truncateID(id string) string {
 		return string(runes[:8])
 	}
 	return id
+}
+
+// unescapeContent replaces literal escape sequences (\n, \t) that AI agents
+// commonly produce when composing multi-line text via shell commands.
+// Shell quoting (e.g. --content "line1\nline2") passes \n as two literal
+// characters; this function converts them to real newlines/tabs.
+func unescapeContent(s string) string {
+	s = strings.ReplaceAll(s, `\n`, "\n")
+	s = strings.ReplaceAll(s, `\t`, "\t")
+	return s
 }

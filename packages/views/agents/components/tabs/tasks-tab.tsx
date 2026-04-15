@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ListTodo } from "lucide-react";
+import { ListTodo, Trash2 } from "lucide-react";
 import type { Agent, AgentTask } from "@multica/core/types";
 import { Skeleton } from "@multica/ui/components/ui/skeleton";
+import { Button } from "@multica/ui/components/ui/button";
 import { api } from "@multica/core/api";
 import { useWorkspaceId } from "@multica/core/hooks";
 import { issueListOptions } from "@multica/core/issues/queries";
@@ -13,6 +14,7 @@ import { taskStatusConfig } from "../../config";
 export function TasksTab({ agent }: { agent: Agent }) {
   const [tasks, setTasks] = useState<AgentTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const wsId = useWorkspaceId();
   const { data: issues = [] } = useQuery(issueListOptions(wsId));
 
@@ -24,6 +26,22 @@ export function TasksTab({ agent }: { agent: Agent }) {
       .catch(() => setTasks([]))
       .finally(() => setLoading(false));
   }, [agent.id]);
+
+  const handleDeleteTask = async (taskId: string) => {
+    setDeletingIds((prev) => new Set(prev).add(taskId));
+    try {
+      await api.deleteAgentTask(agent.id, taskId);
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    } catch {
+      // Silently ignore — task may have been re-activated
+    } finally {
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(taskId);
+        return next;
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -125,6 +143,20 @@ export function TasksTab({ agent }: { agent: Agent }) {
                 <span className={`shrink-0 text-xs font-medium ${config.color}`}>
                   {config.label}
                 </span>
+                {!isActive && task.status !== "queued" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                    disabled={deletingIds.has(task.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteTask(task.id);
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
             );
           })}

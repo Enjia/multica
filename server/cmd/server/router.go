@@ -223,6 +223,7 @@ func NewRouter(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus) chi.Route
 					r.Post("/archive", h.ArchiveAgent)
 					r.Post("/restore", h.RestoreAgent)
 					r.Get("/tasks", h.ListAgentTasks)
+					r.Delete("/tasks/{taskId}", h.DeleteAgentTask)
 					r.Get("/skills", h.ListAgentSkills)
 					r.Put("/skills", h.SetAgentSkills)
 				})

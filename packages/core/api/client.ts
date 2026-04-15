@@ -406,6 +406,12 @@ export class ApiClient {
     return this.fetch(`/api/agents/${agentId}/tasks`);
   }
 
+  async deleteAgentTask(agentId: string, taskId: string): Promise<void> {
+    await this.fetch(`/api/agents/${agentId}/tasks/${taskId}`, {
+      method: "DELETE",
+    });
+  }
+
   async getActiveTasksForIssue(issueId: string): Promise<{ tasks: AgentTask[] }> {
     return this.fetch(`/api/issues/${issueId}/active-task`);
   }

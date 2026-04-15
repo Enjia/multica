@@ -470,3 +470,23 @@ func (h *Handler) ListAgentTasks(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, resp)
 }
+
+func (h *Handler) DeleteAgentTask(w http.ResponseWriter, r *http.Request) {
+	agentID := chi.URLParam(r, "id")
+	taskID := chi.URLParam(r, "taskId")
+
+	if _, ok := h.loadAgentForUser(w, r, agentID); !ok {
+		return
+	}
+
+	err := h.Queries.DeleteAgentTask(r.Context(), db.DeleteAgentTaskParams{
+		ID:      parseUUID(taskID),
+		AgentID: parseUUID(agentID),
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to delete task")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

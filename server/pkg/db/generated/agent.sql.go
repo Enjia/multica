@@ -79,6 +79,21 @@ func (q *Queries) CancelAgentTask(ctx context.Context, id pgtype.UUID) (AgentTas
 	return i, err
 }
 
+const deleteAgentTask = `-- name: DeleteAgentTask :exec
+DELETE FROM agent_task_queue
+WHERE id = $1 AND agent_id = $2 AND status IN ('completed', 'failed', 'cancelled')
+`
+
+type DeleteAgentTaskParams struct {
+	ID      pgtype.UUID
+	AgentID pgtype.UUID
+}
+
+func (q *Queries) DeleteAgentTask(ctx context.Context, arg DeleteAgentTaskParams) error {
+	_, err := q.db.Exec(ctx, deleteAgentTask, arg.ID, arg.AgentID)
+	return err
+}
+
 const cancelAgentTasksByAgent = `-- name: CancelAgentTasksByAgent :exec
 UPDATE agent_task_queue
 SET status = 'cancelled'

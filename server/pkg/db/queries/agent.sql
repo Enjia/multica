@@ -142,6 +142,12 @@ SET status = 'cancelled', completed_at = now()
 WHERE id = $1 AND status IN ('queued', 'dispatched', 'running')
 RETURNING *;
 
+-- name: DeleteAgentTask :exec
+-- Permanently deletes a terminated task (completed, failed, or cancelled).
+-- Active tasks (queued, dispatched, running) cannot be deleted.
+DELETE FROM agent_task_queue
+WHERE id = $1 AND agent_id = $2 AND status IN ('completed', 'failed', 'cancelled');
+
 -- name: CountRunningTasks :one
 SELECT count(*) FROM agent_task_queue
 WHERE agent_id = $1 AND status IN ('dispatched', 'running');

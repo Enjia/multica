@@ -26,7 +26,7 @@ export
 
 MULTICA_ARGS ?= $(ARGS)
 
-COMPOSE := docker compose
+COMPOSE := podman compose
 
 define REQUIRE_ENV
 	@if [ ! -f "$(ENV_FILE)" ]; then \
